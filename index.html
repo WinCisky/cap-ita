@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Numeri separati da virgola</title>
+    <style>
+        #output table th,
+        #output table td {
+            border: 1px soldid;
+        }
+    </style>
+    <script>
+        const url = "https://cap-italy.deno.dev?cap=";
+
+        function showError(err) {
+            document.getElementById("output").innerHTML = "ERROR! " + JSON.stringify(err);
+        }
+
+        function saveAsCsvFile(data) {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "cap, name\r\n";
+
+            data.forEach(function(el) {
+                let row = `${el.cap},${el.name}`;
+                csvContent += row + "\r\n";
+            });
+
+            var encodedUri = encodeURI(csvContent);
+            console.log(encodedUri);
+            window.open(encodedUri);
+        }
+
+        function printAsTable(data) {
+            let table = '<table><tr>';
+
+            // Aggiungi l'intestazione della tabella con i nomi delle proprietà dell'oggetto
+            const keys = Object.keys(data[0]);
+            for (const key of keys) {
+                table += '<th>' + key + '</th>';
+            }
+            table += '</tr>';
+
+            // Aggiungi le righe della tabella con i valori delle proprietà dell'oggetto
+            for (const item of data) {
+                table += '<tr>';
+                for (const key of keys) {
+                    table += '<td>' + item[key] + '</td>';
+                }
+                table += '</tr>';
+            }
+
+            table += '</table>';
+            document.getElementById("output").innerHTML = table;
+        }
+
+
+        function processInput(saveAsCsv = false) {
+            const input = document.getElementById('numbers').value;
+            const numbers = input
+                .replace(/\s/g, "")
+                .replace(/(\r\n|\n|\r)/gm, "");
+
+            fetch(url + numbers).then(resp => {
+                resp.json().then(json => {
+                    if (!json.success) {
+                        showError(json);
+                        console.log(json);
+                    } else {
+                        const results = json.result;
+                        if (saveAsCsv) {
+                            saveAsCsvFile(results);
+                        } else {
+                            printAsTable(results);
+                        }
+                    }
+                }).catch(err => {
+                    showError(err);
+                    console.log(err);
+                });
+            }).catch(err => {
+                showError(err);
+                console.log(err);
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <h1>Numeri separati da virgola</h1>
+    <p>
+        Inserisci i numeri separati da virgola:
+    </p>
+    <textarea type="text" id="numbers" rows="3" cols="30">
+    </textarea>
+    <br><br>
+    <button onclick="processInput(true)">Elabora come csv</button>
+    <button onclick="processInput()">Elabora come tabella</button>
+    <p id="output"></p>
+</body>
+
+</html>
